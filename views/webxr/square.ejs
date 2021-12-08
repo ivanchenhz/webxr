@@ -1,0 +1,149 @@
+<canvas id="canvas" class="w-2/3 h-1/2 mx-auto mt-16"></canvas>
+
+<script type="text/javascript">
+    /*========== Create a WebGL Context ==========*/
+    const canvas = document.querySelector('#canvas')
+    canvas.width = canvas.clientWidth * 2
+    canvas.height = canvas.clientHeight * 2
+    const gl = canvas.getContext('webgl2')
+    if (!gl) {
+        console.log('WebGL unavailable')
+    } else {
+        console.log('WebGL is good to go')
+    }
+    console.log(gl.drawingBufferWidth)
+    console.log(gl.drawingBufferHeight)
+    console.log(gl)
+
+    /*========== Define and Store the Geometry ==========*/
+
+    // Define the points in the scene
+    const squares = [
+        // front face
+        -0.3 , -0.3, -0.3,
+        0.3, -0.3, -0.3,
+        0.3, 0.3, -0.3,
+        -0.3, -0.3, -0.3,
+        -0.3, 0.3, -0.3,
+        0.3, 0.3, -0.3,
+        // back face
+        -0.2, -0.2, 0.3,
+        0.4, -0.2, 0.3,
+        0.4, 0.4, 0.3,
+        -0.2, -0.2, 0.3,
+        -0.2, 0.4, 0.3,
+        0.4, 0.4, 0.3,
+
+        // top face
+        -0.3, 0.3, -0.3,
+        0.3, 0.3, -0.3,
+        -0.2, 0.4,  0.3,
+        0.4, 0.4,  0.3,
+        0.3, 0.3, -0.3,
+        -0.2, 0.4,  0.3,
+    ]
+
+    const squareColors = [
+        0.0,  0.0,  1.0,  1.0,
+        0.0,  0.0,  1.0,  1.0,
+        0.0,  0.0,  1.0,  1.0,
+        0.0,  0.0,  1.0,  1.0,
+        0.0,  0.0,  1.0,  1.0,
+        0.0,  0.0,  1.0,  1.0,
+        1.0,  0.0,  0.0,  1.0,
+        1.0,  0.0,  0.0,  1.0,
+        1.0,  0.0,  0.0,  1.0,
+        1.0,  0.0,  0.0,  1.0,
+        1.0,  0.0,  0.0,  1.0,
+        1.0,  0.0,  0.0,  1.0,
+        0.0,  1.0,  0.0,  1.0,
+        0.0,  1.0,  0.0,  1.0,
+        0.0,  1.0,  0.0,  1.0,
+        0.0,  1.0,  0.0,  1.0,
+        0.0,  1.0,  0.0,  1.0,
+        0.0,  1.0,  0.0,  1.0,
+    ];
+
+    // Create an empty buffer object to store the vertex points
+    // Connect the empty buffer object to the GL context
+    const pointBuffer = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, pointBuffer)
+
+    // Load the vertices into the GL's connected buffer
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(squares), gl.STATIC_DRAW)
+
+    const colorBuffer = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(squareColors), gl.STATIC_DRAW)
+
+    /*========== Shaders ==========*/
+
+    // Create a variable to store the data for our vertex shader
+    const vsSource = `
+        attribute vec4 aPosition;
+        attribute vec4 aVertexColor;
+        varying lowp vec4 vColor;
+
+        void main() {
+            gl_Position = aPosition;
+            vColor = aVertexColor;
+        }
+    `
+
+    // Create a varialble to store the data from our fragment shader
+    const fsSource = `
+        varying lowp vec4 vColor;
+
+        void main() {
+            gl_FragColor = vColor;
+        }
+    `
+
+    // Compile the shaders into little programs
+    const vertexShader = gl.createShader(gl.VERTEX_SHADER)
+    gl.shaderSource(vertexShader, vsSource)
+    gl.compileShader(vertexShader)
+
+    const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)
+    gl.shaderSource(fragmentShader, fsSource)
+    gl.compileShader(fragmentShader)
+
+    // Create a GL program to connect the shaders to the GL context
+    const program = gl.createProgram()
+
+    // Attach the shaders to the GL context through the program
+    gl.attachShader(program, vertexShader)
+    gl.attachShader(program, fragmentShader)
+
+    // Create shader executables to run on the GPU
+    gl.linkProgram(program)
+
+    // Define the active program defining what the GPU will draw
+    gl.useProgram(program)
+
+    /*========== Connect the attribute with the vertex shader ==========*/
+    const posAttribLocation = gl.getAttribLocation(program, "aPosition");
+    gl.bindBuffer(gl.ARRAY_BUFFER, pointBuffer);
+    gl.vertexAttribPointer(posAttribLocation, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(posAttribLocation);
+
+    const colorAttribLocation = gl.getAttribLocation(program, "aVertexColor");
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    gl.vertexAttribPointer(colorAttribLocation, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(colorAttribLocation);
+
+    /*==================== Drawing ======================== */
+
+    // Clear the canvas
+    gl.clearColor(0, 0, 0, 0)
+
+    // Clear the GL context's color buffer for a fresh paint
+    gl.clear(gl.COLOR_BUFFER_BIT)
+
+    // Draw the points on the screen
+    const mode = gl.TRIANGLES
+    const first = 0
+    const count = 18
+    gl.drawArrays(mode, first, count)
+
+</script>
